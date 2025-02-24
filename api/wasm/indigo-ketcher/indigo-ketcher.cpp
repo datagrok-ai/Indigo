@@ -1016,6 +1016,26 @@ namespace indigo
         return buffer.GetString();
     }
 
+    std::string polymerToMol(const std::string& data)
+    {
+        MonomerTemplateLibrary library;
+        rapidjson::Document doc;
+        if (!doc.Parse(data.c_str()).HasParseError())
+        {
+            if (doc.HasMember("root"))
+            {
+                MoleculeJsonLoader loader(doc);
+                loader.loadMonomerLibrary(library);
+            }
+        }
+     
+        KetDocument ket_document;
+        KetDocumentJsonLoader kdloader;
+        kdloader.parseJson(data, ket_document);
+     
+        return toAtomicLevel(ket_document, library);
+    }
+
     EMSCRIPTEN_BINDINGS(module)
     {
         emscripten::function("version", &version);
@@ -1032,6 +1052,7 @@ namespace indigo
         emscripten::function("calculate", &calculate);
         emscripten::function("render", &render);
         emscripten::function("reactionComponents", &reactionComponents);
+        emscripten::function("polymerToMol", &polymerToMol);
 
         emscripten::register_vector<int>("VectorInt");
         emscripten::register_map<std::string, std::string>("MapStringString");

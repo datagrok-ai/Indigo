@@ -47,6 +47,8 @@
 #include <molecule/smiles_loader.h>
 #include <molecule/smiles_saver.h>
 
+#include <molecule/atomic_level.h>
+
 #include "common.h"
 
 #include <algorithm>
@@ -557,6 +559,32 @@ TEST_F(IndigoCoreFormatsTest, mol_to_document)
         fill_conn_info(connection.ep2(), ep2_info);
         printf("%s connection from %s to %s\n", connection.connectionType().c_str(), ep1_info.c_str(), ep2_info.c_str());
     }
+}
+
+TEST_F(IndigoCoreFormatsTest, atomic_level)
+{
+   MonomerTemplateLibrary library;
+   std::string json = "{\"root\":{\"nodes\":[{\"$ref\":\"monomer0\"},{\"$ref\":\"monomer1\"},{\"$ref\":\"monomer2\"},{\"$ref\":\"monomer3\"}],\"connections\":[{\"connectionType\":\"single\",\"endpoint1\":{\"monomerId\":\"monomer0\",\"attachmentPointId\":\"R2\"},\"endpoint2\":{\"monomerId\":\"monomer1\",\"attachmentPointId\":\"R1\"}},{\"connectionType\":\"single\",\"endpoint1\":{\"monomerId\":\"monomer1\",\"attachmentPointId\":\"R2\"},\"endpoint2\":{\"monomerId\":\"monomer2\",\"attachmentPointId\":\"R1\"}},{\"connectionType\":\"single\",\"endpoint1\":{\"monomerId\":\"monomer2\",\"attachmentPointId\":\"R2\"},\"endpoint2\":{\"monomerId\":\"monomer3\",\"attachmentPointId\":\"R1\"}}],\"templates\":[{\"$ref\":\"monomerTemplate-A___Alanine\"}]},\"monomer0\":{\"type\":\"monomer\",\"id\":\"0\",\"position\":{\"x\":1.25,\"y\":-1.25},\"alias\":\"A\",\"templateId\":\"A___Alanine\"},\"monomerTemplate-A___Alanine\":{\"type\":\"monomerTemplate\",\"atoms\":[{\"label\":\"N\",\"location\":[-1.2549,-0.392,0]},{\"label\":\"C\",\"location\":[-0.272,0.2633,0],\"stereoLabel\":\"abs\"},{\"label\":\"C\",\"location\":[-0.3103,1.7393,0]},{\"label\":\"C\",\"location\":[1.0523,-0.392,0]},{\"label\":\"O\",\"location\":[1.0829,-1.5722,0]},{\"label\":\"O\",\"location\":[2.0353,0.2633,0]},{\"label\":\"H\",\"location\":[-2.3334,0.0905,0]}],\"bonds\":[{\"type\":1,\"atoms\":[1,0]},{\"type\":1,\"atoms\":[1,2],\"stereo\":1},{\"type\":1,\"atoms\":[1,3]},{\"type\":2,\"atoms\":[3,4]},{\"type\":1,\"atoms\":[3,5]},{\"type\":1,\"atoms\":[0,6]}],\"class\":\"AminoAcid\",\"classHELM\":\"PEPTIDE\",\"id\":\"A___Alanine\",\"fullName\":\"Alanine\",\"alias\":\"A\",\"attachmentPoints\":[{\"attachmentAtom\":0,\"leavingGroup\":{\"atoms\":[6]},\"type\":\"left\"},{\"attachmentAtom\":3,\"leavingGroup\":{\"atoms\":[5]},\"type\":\"right\"}],\"naturalAnalogShort\":\"A\"},\"monomer1\":{\"type\":\"monomer\",\"id\":\"1\",\"position\":{\"x\":2.75,\"y\":-1.25},\"alias\":\"A\",\"templateId\":\"A___Alanine\"},\"monomer2\":{\"type\":\"monomer\",\"id\":\"2\",\"position\":{\"x\":4.25,\"y\":-1.25},\"alias\":\"A\",\"templateId\":\"A___Alanine\"},\"monomer3\":{\"type\":\"monomer\",\"id\":\"3\",\"position\":{\"x\":5.75,\"y\":-1.25},\"alias\":\"A\",\"templateId\":\"A___Alanine\"}}";
+   rapidjson::Document data;
+   if (!data.Parse(json.c_str()).HasParseError())
+   {
+       if (data.HasMember("root"))
+       {
+           MoleculeJsonLoader loader(data);
+           loader.loadMonomerLibrary(library);
+       }
+   }
+
+   KetDocument ket_document;
+   KetDocumentJsonLoader kdloader;
+   kdloader.parseJson(json, ket_document);
+
+   std:: string res = toAtomicLevel(ket_document, library);
+   //std::cout << res << std::endl;
+
+   std::string check = "\n Indigo \n\n  0  0  0  0  0  0            999 V3000\nM  V30 BEGIN CTAB\nM  V30 COUNTS 22 21 0 0 0\nM  V30 BEGIN ATOM\nM  V30 1 N 1.438700 -0.392000 0.0 0\nM  V30 2 C 2.421600 0.263300 0.0 0\nM  V30 3 C 2.383300 1.739300 0.0 0\nM  V30 4 C 3.745900 -0.392000 0.0 0\nM  V30 5 O 3.776500 -1.572200 0.0 0\nM  V30 6 H 0.360200 0.090500 0.0 0\nM  V30 7 N 5.184600 -0.392000 0.0 0\nM  V30 8 C 6.167500 0.263300 0.0 0\nM  V30 9 C 6.129200 1.739300 0.0 0\nM  V30 10 C 7.491800 -0.392000 0.0 0\nM  V30 11 O 7.522400 -1.572200 0.0 0\nM  V30 12 N 8.930500 -0.392000 0.0 0\nM  V30 13 C 9.913400 0.263300 0.0 0\nM  V30 14 C 9.875100 1.739300 0.0 0\nM  V30 15 C 11.237700 -0.392000 0.0 0\nM  V30 16 O 11.268300 -1.572200 0.0 0\nM  V30 17 N 12.676399 -0.392000 0.0 0\nM  V30 18 C 13.659299 0.263300 0.0 0\nM  V30 19 C 13.620999 1.739300 0.0 0\nM  V30 20 C 14.983599 -0.392000 0.0 0\nM  V30 21 O 15.014199 -1.572200 0.0 0\nM  V30 22 O 15.966599 0.263300 0.0 0\nM  V30 END ATOM\nM  V30 BEGIN BOND\nM  V30 1 1 2 1\nM  V30 2 1 2 3\nM  V30 3 1 2 4\nM  V30 4 2 4 5\nM  V30 5 1 1 6\nM  V30 6 1 8 7\nM  V30 7 1 8 9\nM  V30 8 1 8 10\nM  V30 9 2 10 11\nM  V30 10 1 13 12\nM  V30 11 1 13 14\nM  V30 12 1 13 15\nM  V30 13 2 15 16\nM  V30 14 1 18 17\nM  V30 15 1 18 19\nM  V30 16 1 18 20\nM  V30 17 2 20 21\nM  V30 18 1 20 22\nM  V30 19 1 4 7\nM  V30 20 1 10 12\nM  V30 21 1 15 17\nM  V30 END BOND\nM  V30 END CTAB\nM  END";
+
+   ASSERT_EQ(res, check);
 }
 
 #ifdef _MSC_VER
